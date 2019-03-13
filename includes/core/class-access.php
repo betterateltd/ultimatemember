@@ -560,7 +560,8 @@ if ( ! class_exists( 'um\core\Access' ) ) {
 						return false;
 					else
 						return $restriction;
-				}
+				}				
+				return true;
 			}
 
 			//post hasn't privacy settings....check all terms of this post
@@ -615,6 +616,12 @@ if ( ! class_exists( 'um\core\Access' ) ) {
 
 			$restricted_global_message = UM()->options()->get( 'restricted_access_message' );
 
+			if ( is_object( $query ) ) {
+				$is_singular = $query->is_singular();
+			} else {
+				$is_singular = ! empty( $query->is_singular ) ? true : false;
+			}
+
 			//other filter
 			foreach ( $posts as $post ) {
 
@@ -626,15 +633,14 @@ if ( ! class_exists( 'um\core\Access' ) ) {
 
 				$restriction = $this->get_post_privacy_settings( $post );
 
-				if ( ! $restriction ) {
+				if ( $restriction === true ) {
+					$post->post_content = stripslashes( $restricted_global_message );
 					$filtered_posts[] = $post;
 					continue;
 				}
-
-				if ( is_object( $query ) ) {
-					$is_singular = $query->is_singular();
-				} else {
-					$is_singular = ! empty( $query->is_singular ) ? true : false;
+				if ( empty( $restriction ) || !is_array( $restriction ) ) {
+					$filtered_posts[] = $post;
+					continue;
 				}
 
 				//post is private
